@@ -11,7 +11,7 @@ app.use(express.json());
 
 // Configure CORS to allow requests only from your React frontend
 const corsOptions = {
-  origin: ["http://localhost:3000", "https://webstore-userservice.onrender.com"],// Adjust this for production (e.g., https://yourfrontend.com)
+  origin: ["https://webstore-frontend-9669.onrender.com", "https://webstore-userservice.onrender.com"],// Adjust this for production (e.g., https://yourfrontend.com)
   methods: ["GET", "POST", "PUT", "DELETE"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true, // If your app needs to send cookies or authorization headers
