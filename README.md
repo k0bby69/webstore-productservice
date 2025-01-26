@@ -67,20 +67,4 @@ Run:
 
 You can now test the APIs
 
-## Multivendor Application Services
 
-This is one of the three services for the **Multivendor Application**.  
-
-### Related Repositories
-
-- **Shopping Frontend:**  
-  [MultivendorPlatform-Shopping-Frontend](https://github.com/haariswaqas/MultivendorPlatform-Shopping-Frontend)
-
-- **Notification Microservice:**  
-  [MultiVendorPlatform-Notification-Microservice](https://github.com/samuel2l/MultiVendorPlatform-Notification-Microservice)
-
-- **Shopping Microservice:**  
-  [MultiVendorApp-Products-Microservice](https://github.com/samuel2l/MultivendorPlatform-Shopping-Service)
-
-- **User Microservice:**  
-  [MultiVendorApp-User-Service](https://github.com/samuel2l/MultiVendorApp-User-Service)
