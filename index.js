@@ -9,8 +9,15 @@ const port = process.env.PORT || 8002;
 
 app.use(express.json());
 
-// Remove CORS restrictions and allow requests from everywhere
-app.use(cors());
+// Configure CORS to allow requests only from your React frontend
+const corsOptions = {
+  origin: ["*"],// Adjust this for production (e.g., https://yourfrontend.com)
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true, // If your app needs to send cookies or authorization headers
+};
+
+app.use(cors(corsOptions));  // Use the configured CORS
 
 app.use(express.static(__dirname + "/public"));
 
