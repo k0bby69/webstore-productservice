@@ -35,7 +35,7 @@ async function startApp() {
 
     await productRoutes(app, channel);
     app.listen(port, () => {
-      console.log(User Service is Listening to Port ${port});
+      console.log(`User Service is Listening to Port ${port}`);
     });
   } catch (err) {
     console.log("Failed to start app:", err);
