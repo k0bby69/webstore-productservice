@@ -66,73 +66,82 @@ productRoutes = (app, channel) => {
 
   //edit product
 
-  app.put("/product/:id", auth, async (req, res) => {
+ app.put("/product/:id", auth, async (req, res) => {
     const productId = req.params.id;
     const {
-      name,
-      desc,
-      img = "",
-      type,
-      stock,
-      price,
-      available,
-      sizes = [],
-      colors = [],
-    } = req.body;
-    const product = await Product.findById(productId);
-    if (product.seller != req.user._id) {
-      res.status(403).json({
-        error: "Ah chale it is not your product why do you want to touch it?",
-      });
-    }
-    const seller = req.user._id;
-
-    try {
-      const { data } = await service.UpdateProduct(productId, {
         name,
         desc,
-        img,
+        img = "",
         type,
         stock,
         price,
         available,
-        sizes,
-        colors,
-        seller,
-      });
+        sizes = [],
+        colors = []
+    } = req.body;
 
-      const  payload  = await service.GetUpdatedProductPayload(
-        productId,
-        "UPDATE_CART_PRODUCT"
-      );
-      console.log("in update cart route");
-      console.log(payload.data);
-      const  wishlistPayload  = await service.GetUpdatedProductPayload(
-        productId,
-        "UPDATE_WISHLIST_PRODUCT"
-      );
+    try {
+        const product = await Product.findById(productId);
 
-      PublishMessage(
-        channel,
-        process.env.CUSTOMER_BINDING_KEY,
-        JSON.stringify(payload.data)
-      );
-      PublishMessage(
-        channel,
-        process.env.SHOPPING_BINDING_KEY,
-        JSON.stringify(payload.data)
-      );
+        if (!product) {
+            return res.status(404).json({ error: "Product not found" });
+        }
 
-      
-      if (!data) {
-        return res.status(404).json({ error: "Product not found" });
-      }
+        if (product.seller.toString() !== req.user._id.toString()) {
+            return res.status(403).json({
+                error: "Ah chale it is not your product why do you want to touch it?",
+            });
+        }
 
-      return res.status(200).json(data);
+        const seller = req.user._id;
+
+        const { data } = await service.UpdateProduct(productId, {
+            name,
+            desc,
+            img,
+            type,
+            stock,
+            price,
+            available,
+            sizes,
+            colors,
+            seller
+        });
+
+        if (!data) {
+            return res.status(500).json({ error: "Failed to update product" });
+        }
+
+        console.log("Product updated successfully:", data);
+
+        // Update cart & wishlist
+        const payload = await service.GetUpdatedProductPayload(productId, "UPDATE_CART_PRODUCT");
+        const wishlistPayload = await service.GetUpdatedProductPayload(productId, "UPDATE_WISHLIST_PRODUCT");
+
+        if (payload?.data) {
+            console.log("Publishing cart update:", payload.data);
+            PublishMessage(channel, process.env.CUSTOMER_BINDING_KEY, JSON.stringify(payload.data));
+            PublishMessage(channel, process.env.SHOPPING_BINDING_KEY, JSON.stringify(payload.data));
+        } else {
+            console.log("No cart update payload.");
+        }
+
+        if (wishlistPayload?.data) {
+            console.log("Publishing wishlist update:", wishlistPayload.data);
+            PublishMessage(channel, process.env.CUSTOMER_BINDING_KEY, JSON.stringify(wishlistPayload.data));
+            PublishMessage(channel, process.env.SHOPPING_BINDING_KEY, JSON.stringify(wishlistPayload.data));
+        } else {
+            console.log("No wishlist update payload.");
+        }
+
+        return res.status(200).json(data);
+
     } catch (error) {
-      return res.status(500).json({ error: "Failed to update product" });
+        console.error("Error updating product:", error);
+        return res.status(500).json({ error: "Failed to update product" });
     }
-  });
+});
+
 
   app.delete("/product/:id", isSeller, async (req, res, next) => {
     const productId = req.params.id;
