@@ -271,44 +271,38 @@ productRoutes = (app, channel) => {
   const mongoose = require("mongoose");
 
 app.put("/cart", auth, async (req, res, next) => {
-    try {
-        console.log("Cart Update Request:", req.body);
-        const { _id } = req.user;
+    console.log("Cart Update Request:", req.body);
+    const { _id } = req.user;
 
-        // Validate request body
-        if (!req.body.product || !req.body.product._id) {
-            return res.status(400).json({ error: "Invalid product data" });
-        }
-
-        // Convert productId to ObjectId
-        const productId = new mongoose.Types.ObjectId(req.body.product._id);
-
-        console.log("Converted Product ID:", productId);
-
-        const { data } = await service.GetProductPayload(
-            _id,
-            { productId, amount: req.body.amount }, // Using converted ObjectId
-            "ADD_TO_CART",
-            req.body.isRemove,
-            { sizes: req.body.product.sizes || [], colors: req.body.product.colors || [] }
-        );
-
-        console.log("In PUT /cart route, data:", data);
-
-        // Publish messages to event bus
-        PublishMessage(channel, process.env.CUSTOMER_BINDING_KEY, JSON.stringify(data));
-        PublishMessage(channel, process.env.SHOPPING_BINDING_KEY, JSON.stringify(data));
-
-        // Return response with updated cart data
-        res.status(200).json({
-            product: data.data.product,
-            amount: req.body.amount
-        });
-
-    } catch (error) {
-        console.error("Error in /cart route:", error);
-        res.status(500).json({ error: "Internal Server Error" });
+    // Validate the product ID
+    if (!mongoose.Types.ObjectId.isValid(req.body.product._id)) {
+        return res.status(400).json({ error: 'Invalid product ID' });
     }
+
+    const { data } = await service.GetProductPayload(
+        _id,
+        { productId: req.body.product._id, amount: req.body.amount },
+        "ADD_TO_CART",
+        req.body.isRemove,
+        { sizes: req.body.product.sizes, colors: req.body.product.colors }
+    );
+
+    console.log("in put cart route");
+    console.log(data);
+
+    PublishMessage(
+        channel,
+        process.env.CUSTOMER_BINDING_KEY,
+        JSON.stringify(data)
+    );
+    PublishMessage(
+        channel,
+        process.env.SHOPPING_BINDING_KEY,
+        JSON.stringify(data)
+    );
+
+    const response = { product: data.data.product, amount: req.body.amount };
+    res.status(200).json(response);
 });
 
 
