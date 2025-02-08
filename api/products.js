@@ -268,38 +268,49 @@ productRoutes = (app, channel) => {
   //DID NOT REMOVE THE DELETE ROUTES FOR BOTH CART AND WISHLIST COS IDK IF THAT IS WHAT YOU USED
   //DO NOT KNOW IF IT WILL WORK THOUGH BUT I USE THE PUT ROUTE BELOW FOR BOTH REMOVAL AND ADDING BY SIMPLY ADDING AND isRemove property set as true to remove and false to add to cart or wishlist
 
-  app.put("/cart", auth, async (req, res, next) => {
-    const { _id } = req.user;
-    print(req.body);
-    print("ahhjk dwd", req.body.sizes, req.body.colors);
-    const { data } = await service.GetProductPayload(
-      _id,
-      { productId: req.body.product._id, amount: req.body.amount },
-      "ADD_TO_CART",
-      req.body.isRemove,
-      { sizes: req.body.product.sizes, colors: req.body.product.colors }
-    );
-    console.log("in put cart route");
-    console.log(data);
+  const mongoose = require("mongoose");
 
-    PublishMessage(
-      channel,
-      process.env.CUSTOMER_BINDING_KEY,
-      JSON.stringify(data)
-    );
-    PublishMessage(
-      channel,
-      process.env.SHOPPING_BINDING_KEY,
-      JSON.stringify(data)
-    );
-    console.log(data);
-    //old
-    // const response = { product: data.data.product, stock: data.data.qty };
-    //new
-    const response = { product: data.data.product, amount: req.body.amount };
+app.put("/cart", auth, async (req, res, next) => {
+    try {
+        console.log("Cart Update Request:", req.body);
+        const { _id } = req.user;
 
-    res.status(200).json(response);
-  });
+        // Validate request body
+        if (!req.body.product || !req.body.product._id) {
+            return res.status(400).json({ error: "Invalid product data" });
+        }
+
+        // Convert productId to ObjectId
+        const productId = new mongoose.Types.ObjectId(req.body.product._id);
+
+        console.log("Converted Product ID:", productId);
+
+        const { data } = await service.GetProductPayload(
+            _id,
+            { productId, amount: req.body.amount }, // Using converted ObjectId
+            "ADD_TO_CART",
+            req.body.isRemove,
+            { sizes: req.body.product.sizes || [], colors: req.body.product.colors || [] }
+        );
+
+        console.log("In PUT /cart route, data:", data);
+
+        // Publish messages to event bus
+        PublishMessage(channel, process.env.CUSTOMER_BINDING_KEY, JSON.stringify(data));
+        PublishMessage(channel, process.env.SHOPPING_BINDING_KEY, JSON.stringify(data));
+
+        // Return response with updated cart data
+        res.status(200).json({
+            product: data.data.product,
+            amount: req.body.amount
+        });
+
+    } catch (error) {
+        console.error("Error in /cart route:", error);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+});
+
 
   app.delete("/cart/:id", auth, async (req, res, next) => {
     const { _id } = req.user;
